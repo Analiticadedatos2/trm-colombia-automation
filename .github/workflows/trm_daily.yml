@@ -1,0 +1,30 @@
+name: TRM Colombia Daily
+
+on:
+  schedule:
+    - cron: '0 14 * * *'  # 8 AM Hora Colombia (UTC-5)
+  workflow_dispatch:  # Ejecución manual
+
+jobs:
+  extract-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: Install dependencies
+        run: pip install pandas requests
+
+      - name: Run TRM Script
+        run: python trm_script.py
+        
+      - name: Upload to Google Drive
+        uses: satackey/action-google-drive@v1.1.1
+        with:
+          upload-from: './trm_diaria.csv'
+          upload-to: 'TRM-Data'  # Carpeta en tu Drive
+          google-service-account-json: ${{ secrets.GDRIVE_CREDENTIALS }}

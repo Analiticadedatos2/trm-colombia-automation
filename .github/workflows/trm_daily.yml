@@ -2,8 +2,8 @@ name: TRM Colombia Daily
 
 on:
   schedule:
-    - cron: '0 14 * * *'  # 8 AM Hora Colombia (UTC-5)
-  workflow_dispatch:  # Ejecución manual
+    - cron: '0 14 * * *'  # 8 AM Colombia (UTC-5)
+  workflow_dispatch:
 
 jobs:
   extract-and-upload:
@@ -23,8 +23,9 @@ jobs:
         run: python trm_script.py
         
       - name: Upload to Google Drive
-        uses: satackey/action-google-drive@v1.1.1
+        uses: google-github-actions/upload-google-drive@v0
         with:
-          upload-from: './trm_diaria.csv'
-          upload-to: 'TRM-Data'  # Carpeta en tu Drive
-          google-service-account-json: ${{ secrets.GDRIVE_CREDENTIALS }}
+          credentials: ${{ secrets.GDRIVE_CREDENTIALS }}
+          parent-folder-id: "1gq_7fVr59aM3jk6MZNgSgLllv5LgENZq" # ← Reemplaza con tu ID
+          source-path: "./trm_diaria.csv"
+          target-name: "trm_$(date +%Y%m%d).csv"  # Nombre con fecha

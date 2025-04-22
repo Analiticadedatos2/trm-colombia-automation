@@ -1,12 +1,14 @@
 name: TRM Automation with History
+
 on:
   schedule:
-    - cron: '0 8 * * *'  # Diario a las 8 AM UTC
+    - cron: '0 12 * * *'  # 7 AM Colombia (12 UTC)
   workflow_dispatch:
 
 jobs:
   update-trm:
     runs-on: ubuntu-latest
+    timeout-minutes: 5  # Añadir timeout
     
     steps:
     - uses: actions/checkout@v3
@@ -19,25 +21,24 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install seaborn pandas requests matplotlib
+        pip install pandas requests numpy
+        echo "Dependencias instaladas"
         
-    - name: Create data directory
+    - name: Run TRM script with error handling
       run: |
-        mkdir -p data
-        mkdir -p images
-        mkdir -p scripts
+        echo "Iniciando script..."
+        python scripts/trm_script.py || echo "Script falló con código $?"
+        echo "Verificando salida..."
+        [ -f data/trm_actual.csv ] && echo "Archivo generado" || echo "No se generó archivo"
         
-    - name: Run TRM script
-      run: |
-        python scripts/trm_script.py
-        
-    - name: Commit and push changes
+    - name: Commit changes
+      if: success() || failure()  # Siempre ejecutar para diagnóstico
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
         git add .
-        git commit -m "Actualización automática TRM [skip ci]"
-        git push
+        git status
+        git commit -m "Automatic TRM update attempt [skip ci]" || echo "Commit falló"
+        git push || echo "Push falló"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

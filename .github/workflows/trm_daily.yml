@@ -1,31 +1,43 @@
-name: TRM Colombia Daily
-
+name: TRM Automation with History
 on:
   schedule:
-    - cron: '0 14 * * *'  # 8 AM Colombia (UTC-5)
+    - cron: '0 8 * * *'  # Diario a las 8 AM UTC
   workflow_dispatch:
 
 jobs:
-  extract-and-upload:
+  update-trm:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install seaborn pandas requests matplotlib
         
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-          
-      - name: Install dependencies
-        run: pip install pandas requests
+    - name: Create data directory
+      run: |
+        mkdir -p data
+        mkdir -p images
+        mkdir -p scripts
+        
+    - name: Run TRM script
+      run: |
+        python scripts/trm_script.py
+        
+    - name: Commit and push changes
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        git add .
+        git commit -m "Actualización automática TRM [skip ci]"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run TRM Script
-        run: python trm_script.py
-        
-      - name: Upload to Google Drive
-        uses: r0adkll/upload-google-drive@v1.0.18
-        with:
-          credentials: ${{ secrets.GDRIVE_CREDENTIALS }}
-          parent: "1gq_7fVr59aM3jk6MZNgSgLllv5LgENZq"  # Reemplazar con ID real
-          file: "./trm_diaria.csv"
-          name: "trm_diaria.csv"
